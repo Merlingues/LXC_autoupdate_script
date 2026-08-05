@@ -1,10 +1,10 @@
 # LXC_autoupdate_script
 
-![Proxmox](https://img.shields.io/badge/Proxmox-VE-E570xmox&logoColor=white
-![Shell Script](https://img.shields.io/badge/Shell-Bash-121011?logo=gnu-bite
-![Linux](https://img.shields.io/badge/Linux-Debian-A81debian&logoColor=white
-![LXC](https://img.shields.io/badge/LXC-Containers-333tatus](https://s.io/badge/Status-Active-brightgreen
-![License](https://img.shieldsicense-MIT-green
+https://img.shields.io/badge/Proxmox-VE-E570xmox&logoColor=white
+https://img.shields.io/badge/Shell-Bash-121011?logo=gnu-bite
+https://img.shields.io/badge/Linux-Debian-A81debian&logoColor=white
+https://img.shields.io/badge/LXC-Containers-333tatus](https://s.io/badge/Status-Active-brightgreen
+https://img.shieldsicense-MIT-green
 
 Ce projet sert à mettre à jour automatiquement les conteneurs LXC sur un hôte PROXMOX
 
