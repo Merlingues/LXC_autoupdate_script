@@ -11,28 +11,28 @@ Ce projet sert à mettre à jour automatiquement les conteneurs LXC sur un hôte
 
 ## Installation 
 Cloner le projet  :
-'''bash
+```bash
 sudo git clone https://github.com/Merlingues/LXC_autoupdate_script/
-'''
+```
 
 Déplacer le dossier et créer le dossier logs :
-'''bash 
+```bash 
 sudo mkdir -p /opt/scripts/logs
 sudo mv ./LXC_autoupdate_script/backupMaj.sh /opt/scripts
-'''
+```
 
 Installer les packages nécessaires : 
-'''bash
+```bash
 sudo apt install msmtp msmtp-mta
-'''
+```
 
 Créer le fichier de configuration msmtp :
-'''bash
+```bash
 sudo nano /etc/msmtprc
-'''
+```
 
 Configurer msmtp (exemple avec mail orange) : 
-'''
+```
 # Paramètres par défaut
 defaults
 auth           on
@@ -52,11 +52,11 @@ password       passwordmail
 
 # Définir ce compte comme défaut
 account default : orange
-'''
+```
 
 Sécuriser le fichier msmtp :
-'''bash
+```bash
 sudo chmod 600 /etc/msmtprc
-'''
+```
 
 
