@@ -51,8 +51,52 @@ for vmid in $vmids; do
 		echo "[ERREUR] Echec de la mise à jour (LXC) du conteneur :  $vmid - $name"
 		((nombreErreur++))
 		continue
-	fi	
+	fi
 
+	#Test Générique POSTMAJ
+	#1. Test ICMP
+	if ! pct exec "$vmid" -- bash -c "ping -c 4 9.9.9.9"; then
+		echo "[Erreur] Echec du Test ICMP :  $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#2. Test DNS
+	if [[ -z "$(pct exec "$vmid" -- bash -c "dig +short proton.me")" ]]; then
+		echo "[Erreur] Echec du Test DNS : $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#Test des ports en écoute
+	apres=$(pct exec "$vmid" -- bash -c "ss -Htuln | awk '{print \$5}' | awk -F':' '{if (\$NF < 32768) print \$NF}' | sort -n | uniq")
+	if [[ "$avant" != "$apres" ]]; then
+		echo "[Erreur] Echec du Test des ports : $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#Test globale du système
+	if ! pct exec "$vmid" -- bash -c "systemctl is-system-running"; then
+		echo "[Erreur] Echec du Test globale système : $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#Identification des échecs
+	if [[ -n "$(pct exec "$vmid" -- bash -c "systemctl list-units --state=failed --no-legend")" ]]; then
+		echo "[Erreur] Echec(s) détecté(s) : $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#Test espace disque
+	espaceUtil=$(pct exec "$vmid" -- bash -c "df -h /" | awk 'NR>1 {print $5}' | tr -d '%')
+	if [[ "$espaceUtil" -ge 90 ]] ; then
+		echo "[Erreur] Espace disque critique (>90%) : $vmid - $name"
+		((nombreErreur++))
+	fi
+
+	#Test permissions d'écriture
+	if ! pct exec "$vmid" -- bash -c "touch /tmp/test_$(date +%s) && rm /tmp/test_*"; then
+		echo "[Erreur] Echec du Test permission d'écriture"
+		((nombreErreur++))
+	fi
 done
 
 #Notification par mail
