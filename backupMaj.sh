@@ -1,4 +1,5 @@
 #!/bin/bash
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 #Initialisation des chemins d'accès.
 backupDir=""
@@ -12,7 +13,6 @@ exec > >(tee -a "$logFile") 2>&1
 
 #Variable Globale
 nombreErreur=0
-#Nombre de backup à garder sur le serveur
 nombreBackup=2
 
 #Récuperation des VMID des LXC allumés
@@ -23,7 +23,9 @@ for vmid in $vmids; do
 
 	#Récuperation du nom du LXC
 	name=$(pct config "$vmid" | grep '^hostname:' | awk '{print $2}')
+	avant=$(pct exec "$vmid" -- bash -c "ss -Htuln | awk '{print \$5}' | awk -F':' '{if (\$NF < 32768) print \$NF}' | sort -n | uniq")
 	echo "[INFO] Traitement du LXC : $vmid - $name"
+
 
 	#Sauvergarde
 	echo "[INFO] Sauvegarde du conteneur : $vmid - $name"
@@ -68,7 +70,7 @@ for vmid in $vmids; do
 
 	#Test des ports en écoute
 	apres=$(pct exec "$vmid" -- bash -c "ss -Htuln | awk '{print \$5}' | awk -F':' '{if (\$NF < 32768) print \$NF}' | sort -n | uniq")
-	if [[ "$avant" != "$apres" ]]; then
+	if [[ "$avant" != "$apres" ]]; then
 		echo "[Erreur] Echec du Test des ports : $vmid - $name"
 		((nombreErreur++))
 	fi
@@ -97,11 +99,72 @@ for vmid in $vmids; do
 		echo "[Erreur] Echec du Test permission d'écriture"
 		((nombreErreur++))
 	fi
+
+	#Récuperation des tags pour les tests spécifiques
+	tags=$(pct config "$vmid" | grep "^tags:")
+
+	#Test Docker
+	if [[ "$tags" =~ docker ]]; then
+		if ! pct exec "$vmid" -- bash -c "docker info >/dev/null 2>&1"; then
+			echo "[Erreur] Echec du Test Docker (inactif ou injoignable)"
+			((nombreErreur++))
+		fi
+
+	#Test pterodactyl (panel)
+	elif [[ "$tags" =~ pterodactyl-panel ]]; then
+		if ! pct exec "$vmid" -- bash -c "cd /var/www/pterodactyl && php artisan migrate:status >/dev/null 2>&1 && curl -I http://localhost 2>/dev/null" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du Test Pterodactyl Panel (Base de données ou Web injoignable) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test pterodactyl (wings)
+	elif [[ "$tags" =~ pterodactyl-wings ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:8080/api/system" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du test Pterodactyl Wings (API locale injoignable) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test patchmon
+	elif [[ "$tags" =~ patchmon ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:3000" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du test PatchMon (Interface web injoignable sur le port 3000) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test Bezsel
+	elif [[ "$tags" =~ bezsel ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:8090" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du test Beszel (Interface web injoignable sur le port 8090) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test pihole
+	elif [[ "$tags" =~ pihole ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s http://localhost/admin/api" | grep -q 'enabled'; then
+			echo "[Erreur] Echec du test Pi-hole (Moteur DNS FTL inactif ou web injoignable) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test homarr
+	elif [[ "$tags" =~ homarr ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:7575" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du test Homarr (Interface web injoignable sur le port 7575) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	#Test nginxproxymanager
+	elif [[ "$tags" =~ nginxproxxymanager ]]; then
+		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:81" | grep -q 'HTTP/'; then
+			echo "[Erreur] Echec du test Nginx Proxy Manager (Interface d'administration injoignable sur le port 81) : $vmid - $name"
+			((nombreErreur++))
+		fi
+
+	fi
 done
 
 #Notification par mail
 if [ "$nombreErreur" -gt 0 ]; then
-	echo "[ALERTE] $nombreErreur erreur(s) détectée(s). Envoi d'un mail"
+	echo "[ALERTE] $nombreErreur erreur(s) détectée(s). Envoi d'un rapport"
 	mail -s "[ALERTE] : Erreur Maj Proxmox "$serverName"" "$sendMail" < "$logFile"
 	exit 1
 else
