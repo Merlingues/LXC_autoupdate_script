@@ -101,7 +101,7 @@ for vmid in $vmids; do
 	fi
 
 	#Récuperation des tags pour les tests spécifiques
-	tags=$(pct config "$vmid" | grep "^tags:")
+	tags=$(pct config "$vmid" | /bin/grep "^tags:")
 
 	#Test Docker
 	if [[ "$tags" =~ docker ]]; then
