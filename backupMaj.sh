@@ -140,7 +140,7 @@ for vmid in $vmids; do
 
 	#Test pihole
 	elif [[ "$tags" =~ pihole ]]; then
-		if ! pct exec "$vmid" -- bash -c "curl -s http://localhost/admin/api" | grep -q 'enabled'; then
+		if ! pct exec "$vmid" -- bash -c "curl -s http://localhost/api" | grep -q 'enabled'; then
 			echo "[Erreur] Echec du test Pi-hole (Moteur DNS FTL inactif ou web injoignable) : $vmid - $name"
 			((nombreErreur++))
 		fi
