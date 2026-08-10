@@ -211,7 +211,7 @@ for vmid in $vmids; do
 
 	#Test pihole
 	elif [[ "$tags" =~ pihole ]]; then
-		resultat=$(pct exec "$vmid" -- bash -c "curl -sS http://localhost/api" 2>&1)
+		resultat=$(pct exec "$vmid" -- bash -c "curl -sS http://localhost/api/docs" 2>&1)
 		if ! echo "$resultat" | grep -q 'enabled'; then
 			echo "[Erreur] Echec du test Pi-hole (Moteur DNS FTL inactif ou web injoignable) : $vmid - $name"| tee -a "$sendFile"
 			echo "Détails techniques : $resultat" | tee -a "$sendFile"
