@@ -34,6 +34,10 @@ Actuellement les applications dont les tests sont scriptés sont Docker, Homarr,
 | PiHole      |  pihole    |
 |pterodactyl | pterodactyl-wings / pterodactyl-panel|
 
+Pour ajouter des tags vous pouvez le faire directement depuis l'interface graphique ou avec cette commande : 
+```bash
+sudo pct set {VMID} -tags {tag1},{tag2},...
+```
 
 ## Installation 
 Cloner le projet  :
