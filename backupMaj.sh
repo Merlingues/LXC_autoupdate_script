@@ -228,7 +228,7 @@ for vmid in $vmids; do
 		fi
 
 	#Test nginxproxymanager
-	elif [[ "$tags" =~ nginxproxxymanager ]]; then
+	elif [[ "$tags" =~ nginxproxymanager ]]; then
 		resultat=$(pct exec "$vmid" -- bash -c "curl -sS -I http://localhost:81" 2>&1)
 		if ! echo "$resultat" | grep -q 'HTTP/'; then
 			echo "[Erreur] Echec du test Nginx Proxy Manager (Interface d'administration injoignable sur le port 81) : $vmid - $name"| tee -a "$sendFile"
