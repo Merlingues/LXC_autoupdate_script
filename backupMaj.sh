@@ -153,7 +153,7 @@ for vmid in $vmids; do
 		fi
 
 	#Test nginxproxymanager
-	elif [[ "$tags" =~ nginxproxxymanager ]]; then
+	elif [[ "$tags" =~ nginxproxymanager ]]; then
 		if ! pct exec "$vmid" -- bash -c "curl -s -I http://localhost:81" | grep -q 'HTTP/'; then
 			echo "[Erreur] Echec du test Nginx Proxy Manager (Interface d'administration injoignable sur le port 81) : $vmid - $name"
 			((nombreErreur++))
