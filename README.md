@@ -12,8 +12,32 @@ Ce projet sert à mettre à jour automatiquement les conteneurs LXC sur un hôte
 - Backup
 - MAJ packages
 - MAJ LXC
-- Test après MAJ _(en cours)_
+- Test POST-MAJ
+    - Réseau
+    - Système
+    - Espace Disque
+    - Permissions
+    - Applicatif 
 - Alerte mail
+
+## Prérequis : Test Applicatif 
+
+Afin de permettre au script d'effectuer les tests applicatifs sur votre infrastructure LXC, il faut tagguer les LXC avec le nom des services installer.
+Actuellement les applications dont les tests sont scriptés sont Docker, Homarr, pterodactyl, NPM et Pihole
+
+| Application | Tag |
+|:-------------: |-------------|
+|Bezsel | bezsel |
+| Docker      | docker   |
+| NPM   | nginxproxymanager     |
+|Patchmon | patchmon |
+| PiHole      |  pihole    |
+|pterodactyl | pterodactyl-wings / pterodactyl-panel|
+
+Pour ajouter des tags vous pouvez le faire directement depuis l'interface graphique ou avec cette commande : 
+```bash
+sudo pct set {VMID} -tags {tag1},{tag2},...
+```
 
 ## Installation 
 Cloner le projet  :
