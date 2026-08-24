@@ -58,14 +58,16 @@ for vmid in $vmids; do
 	fi
 
 	#MAJ conteneur
-	resultat=$(pct exec "$vmid" -- bash -c '"yes"|update' 2>&1)
-	code=$?
-	echo "$resultat"
-	if [[ $code -ne 0 ]] ; then
-		echo "[ERREUR] Echec de la mise à jour (LXC) du conteneur :  $vmid - $name" | tee -a "$sendFile"
-		echo "Détails techniques : $resultat" | tee -a "$sendFile"
-		((nombreErreur++))
-		continue
+	if pct exec "$vmid" -- bash -c "command -v update>/dev/null 2>&1"; then 
+		resultat=$(pct exec "$vmid" -- bash -c '"yes"|update' 2>&1)
+		code=$?
+		echo "$resultat"
+		if [[ $code -ne 0 ]] ; then
+			echo "[ERREUR] Echec de la mise à jour (LXC) du conteneur :  $vmid - $name" | tee -a "$sendFile"
+			echo "Détails techniques : $resultat" | tee -a "$sendFile"
+			((nombreErreur++))
+			continue
+		fi
 	fi
 
 	#Test Générique POSTMAJ
@@ -80,19 +82,21 @@ for vmid in $vmids; do
 	fi
 
 	#2. Test DNS
-	resultat=$(pct exec "$vmid" -- bash -c "dig +short proton.me" 2>&1)
-	code=$?
-	echo "$resultat"
-	if [[ $code -ne 0 ]] || [[ -z "$resultat" ]]; then
-		echo "[ERREUR] Echec du Test DNS : $vmid - $name" | tee -a "$sendFile"
-		if [[ -z "$resultat" ]]; then
-			echo "Détails techniques : Aucune adresse IP retournée (Erreur de résolution)" | tee -a "$sendFile"
-		else
-			echo "Détails techniques : $resultat" | tee -a "$sendFile"
+	if pct exec "$vmid" -- bash -c "command -v dig>/dev/null 2>&1"; then
+		resultat=$(pct exec "$vmid" -- bash -c "dig +short proton.me" 2>&1)
+		code=$?
+		echo "$resultat"
+		if [[ $code -ne 0 ]] || [[ -z "$resultat" ]]; then
+			echo "[ERREUR] Echec du Test DNS : $vmid - $name" | tee -a "$sendFile"
+			if [[ -z "$resultat" ]]; then
+				echo "Détails techniques : Aucune adresse IP retournée (Erreur de résolution)" | tee -a "$sendFile"
+			else
+				echo "Détails techniques : $resultat" | tee -a "$sendFile"
+			fi
+			((nombreErreur++))
 		fi
-		((nombreErreur++))
 	fi
-
+	
 	#Test des ports en écoute
 	apres=$(pct exec "$vmid" -- bash -c "ss -Htuln 2>&1 | awk '{print \$5}' | awk -F':' '{if (\$NF < 32768) print \$NF}' | sort -n | uniq")
 	code=$?
@@ -241,17 +245,17 @@ done
 
 #Notification par mail
 if [ "$nombreErreur" -gt 0 ]; then
-	if [[ "$sendMail" != "" ]]; then
+	if [[ -n "$sendMail"]]; then
 		echo "[ALERTE] $nombreErreur erreur(s) détectée(s). Envoi d'un mail" | tee -a "$sendFile"
 		mail -s "[ALERTE] : Erreur Maj Proxmox $serverName" "$sendMail" < "$sendFile"
-		exit 1
-	elif [[ "$sendDiscord" != "" ]]; then
+	fi
+	if [[ -n "$sendDiscord" ]]; then
 		echo "[ALERTE] $nombreErreur erreur(s) détectée(s). Envoi d'un message discord" | tee -a "$sendFile"
 		curl -s -F "payload_json={\"content\": \"🚨 **[ALERTE]** $nombreErreur erreur(s) détectée(s) sur le serveur **$serverName**.\"}" \
 			-F "file=@$sendFile" \
 			"$sendDiscord" > /dev/null
-		exit 1
 	fi
+	exit 1
 else
 	echo "[SUCCES] Toutes les actions se sont terminées avec succès."
 	exit 0
