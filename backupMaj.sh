@@ -31,7 +31,7 @@ for vmid in $vmids; do
 
 	#Sauvergarde
 	echo "[INFO] Sauvegarde du conteneur : $vmid - $name"
-	resultat=$(vzdump "$vmid" --mode snapshot --compress zstd --dumpdir "$backupDir" 2>&1)
+	resultat=$(vzdump "$vmid" --mode snapshot --compress zstd --dumpdir "$backupDir" --prune-backups 'keep-last=2' 2>&1)
 	code=$?
 	echo "$resultat"
 	if [[ $code -ne 0 ]] ; then
@@ -40,8 +40,6 @@ for vmid in $vmids; do
 		((nombreErreur++))
 		continue
 	fi
-
-	ls -t "$backupDir"/vzdump-lxc-$vmid-*.{tar,vma}.* 2>/dev/null | tail -n +$(($nombreBackup + 1)) | xargs -I {} rm -f "{}"
 
 	#MAJ
 	echo "Mise à jour du conteneur : $vmid - $name"
