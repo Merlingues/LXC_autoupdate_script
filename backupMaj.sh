@@ -31,7 +31,7 @@ for vmid in $vmids; do
 
 	#Sauvergarde
 	echo "[INFO] Sauvegarde du conteneur : $vmid - $name"
-	resultat=$(vzdump "$vmid" --mode snapshot --compress zstd --dumpdir "$backupDir" --prune-backups 'keep-last=2' 2>&1)
+	resultat=$(vzdump "$vmid" --mode snapshot --compress zstd --dumpdir "$backupDir" --prune-backups "keep-last=$nombreBackup" 2>&1)
 	code=$?
 	echo "$resultat"
 	if [[ $code -ne 0 ]] ; then
